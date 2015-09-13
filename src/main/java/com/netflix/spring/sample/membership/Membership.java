@@ -1,40 +1,45 @@
 package com.netflix.spring.sample.membership;
 
+import java.util.Map;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.boot.builder.SpringApplicationBuilder;
+import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.integration.channel.DirectChannel;
+import org.springframework.integration.config.EnableIntegrationManagement;
+import org.springframework.integration.core.MessageSource;
+import org.springframework.integration.dsl.IntegrationFlow;
+import org.springframework.integration.dsl.IntegrationFlows;
+import org.springframework.integration.dsl.channel.MessageChannels;
+import org.springframework.integration.dsl.core.Pollers;
+import org.springframework.integration.endpoint.MethodInvokingMessageSource;
+import org.springframework.integration.support.management.DefaultMetricsFactory;
+import org.springframework.integration.support.management.MetricsFactory;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestMethod;
+import org.springframework.web.bind.annotation.RestController;
+
 import com.google.common.collect.ImmutableMap;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.boot.autoconfigure.test.ImportAutoConfiguration;
-import org.springframework.boot.builder.SpringApplicationBuilder;
-import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
-import org.springframework.cloud.netflix.metrics.atlas.AtlasAutoConfiguration;
-import org.springframework.cloud.netflix.metrics.atlas.AtlasExporter;
-import org.springframework.cloud.netflix.metrics.spectator.SpectatorAutoConfiguration;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.Map;
 
 @SpringBootApplication
 @EnableEurekaClient
-//@EnableSpectator
-//@EnableAtlas
 @EnableScheduling
-@ImportAutoConfiguration({SpectatorAutoConfiguration.class, AtlasAutoConfiguration.class})
+@EnableAutoConfiguration
 public class Membership {
     public static void main(String[] args) {
-        new SpringApplicationBuilder(Membership.class).web(true).run(args);
-    }
-
-    @Autowired
-    AtlasExporter exporter;
-
-    @Scheduled(fixedRate = 5000L)
-    void pushMetricsToAtlas() {
-        exporter.export();
+        new SpringApplicationBuilder(Membership.class, IntegrationConfig.class).web(true).run(args);
     }
 }
 
@@ -62,6 +67,52 @@ class MembershipController {
 
     @RequestMapping("/{user}")
     Member login(@PathVariable String user) {
+    	delay();
         return memberStore.get(user);
     }
+    
+	private Random rand = new Random();
+	private void delay()
+	{
+		try {
+			Thread.sleep((int)((Math.abs(2 + rand.nextGaussian()*15))*100));
+		} catch (InterruptedException e) {
+			throw new RuntimeException(e);
+		}
+	}
+
+}
+
+
+@Configuration
+@EnableIntegrationManagement(countsEnabled = "*", statsEnabled = "*", metricsFactory = "metricsFactory")
+class IntegrationConfig {
+	
+	@Bean
+	public MetricsFactory metricsFactory() {
+		return new DefaultMetricsFactory();
+	}
+	
+	@Bean
+	public MessageSource<?> integerMessageSource() {
+		MethodInvokingMessageSource source = new MethodInvokingMessageSource();
+		source.setObject(new AtomicInteger());
+		source.setMethodName("getAndIncrement");
+		return source;
+	}
+
+	@Bean
+	public DirectChannel inputChannel() {
+		return new DirectChannel();
+	}
+	
+	@Bean
+	public IntegrationFlow myFlow() {
+		return IntegrationFlows.from(this.integerMessageSource(), c -> c.poller(Pollers.fixedRate(100)))
+				.channel(this.inputChannel())
+				.filter((Integer p) -> p > 0)
+				.transform(Object::toString)
+				.channel(MessageChannels.queue("sampleQueue"))
+				.get();
+	}
 }

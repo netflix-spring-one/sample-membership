@@ -9,3 +9,4 @@ netflix:
   atlas.uri: http://localhost:7101/api/v1/publish
 eureka.client.serviceUrl.defaultZone: http://localhost:8761/eureka/
 server.port: 8080
+netflix.spectator.rest.maxAge: 2000

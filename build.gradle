@@ -39,6 +39,9 @@ dependencies {
     compile 'com.netflix.spectator:spectator-reg-servo:0.30.0'
     compile 'com.netflix.spectator:spectator-ext-sandbox:0.30.0'
     compile 'com.netflix.servo:servo-atlas:0.11.2'
+	
+	compile 'org.springframework.boot:spring-boot-starter-integration'
+	compile 'org.springframework.integration:spring-integration-java-dsl'
 
     compile 'org.projectlombok:lombok:latest.release'
 }
