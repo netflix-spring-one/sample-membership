@@ -13,3 +13,4 @@ target
 .springBeans
 .idea
 *.iml
+gradle.properties
