@@ -2,14 +2,13 @@ buildscript {
     repositories { jcenter() }
     dependencies {
         classpath 'io.spring.gradle:dependency-management-plugin:0.5.2.RELEASE'
-        classpath 'com.bmuschko:gradle-docker-plugin:latest.release'
+        classpath 'org.springframework.boot:spring-boot-gradle-plugin:latest.release'
     }
 }
 
 apply plugin: 'java'
 apply plugin: 'io.spring.dependency-management'
-apply plugin: 'application'
-apply plugin: 'com.bmuschko.docker-java-application'
+apply plugin: 'spring-boot'
 
 group = 'com.netflix.spring'
 
@@ -42,18 +41,4 @@ dependencies {
     compile 'com.netflix.servo:servo-atlas:0.11.2'
 
     compile 'org.projectlombok:lombok:latest.release'
-}
-
-mainClassName = 'com.netflix.spring.sample.membership.Membership'
-
-docker {
-    javaApplication {
-        maintainer = 'Jon Schneider "joschneider@netflix.com"'
-        tag = 'sample-membership'
-    }
-    registryCredentials {
-        username = 'netflixspring'
-        password = dockerPassword
-        email = dockerEmail
-    }
 }
