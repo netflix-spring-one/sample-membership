@@ -18,7 +18,6 @@ sourceCompatibility = '1.8'
 repositories {
     jcenter()
     maven { url 'http://repo.spring.io/snapshot' }
-    maven { url 'https://dl.bintray.com/netflixoss/maven' }
 }
 
 dependencyManagement {
