@@ -30,7 +30,7 @@
 					<table>
 						<tr><td>Rate by time bucket</td><td><img src={"http://localhost:7101/api/v1/graph?q=name,rest,:eq,statistic,count,:eq,:and,:avg,(,bucket,),:by,:stack&step=PT10S&id=" + this.state.time}/></td></tr>
 						<tr><td>Rate by time bucket and handler name</td><td><img src={"http://localhost:7101/api/v1/graph?q=name,rest,:eq,statistic,count,:eq,:and,:avg,(,bucket,handlerName,),:by,:stack&step=PT10S&id=" + this.state.time}/></td></tr>
-						<tr><td>% Response codes</td><td><img src={"http://localhost:7101/api/v1/graph?q=name,rest,:eq,statistic,count,:eq,:and,:avg,(,status,),:by,:vspan&step=PT10S&id=" + this.state.time}/></td></tr>
+						<tr><td>% Response codes</td><td><img src={"http://localhost:7101/api/v1/graph?q=name,rest,:eq,statistic,count,:eq,:and,:avg,(,status,),:by,:pct,:stack&step=PT1S&id=" + this.state.time}/></td></tr>
                     	<tr><td>Max time spent by handler name</td><td><img src={"http://localhost:7101/api/v1/graph?q=name,rest,:eq,statistic,totalTime,:eq,:and,:max,(,handlerName,),:by,:stack&step=PT10S&id=" + this.state.time}/></td></tr>
 						<tr><td>Average time spent by handler name</td><td><img src={"http://localhost:7101/api/v1/graph?q=name,rest,:eq,statistic,totalTime,:eq,:and,:avg,(,handlerName,),:by&step=PT10S&id=" + this.state.time}/></td></tr>
                 	</table>
