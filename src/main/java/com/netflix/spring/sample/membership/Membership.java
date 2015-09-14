@@ -20,12 +20,16 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
 import org.springframework.cloud.netflix.eureka.EurekaStatusChangedEvent;
+import org.springframework.cloud.netflix.metrics.spectator.EnableSpectator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.event.EventListener;
@@ -41,24 +45,14 @@ import org.springframework.integration.endpoint.MethodInvokingMessageSource;
 import org.springframework.integration.support.management.DefaultMetricsFactory;
 import org.springframework.integration.support.management.MetricsFactory;
 import org.springframework.messaging.MessageChannel;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import com.google.common.collect.ImmutableMap;
 import com.netflix.appinfo.InstanceInfo.InstanceStatus;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 @SpringBootApplication
 @EnableEurekaClient
-@EnableScheduling
-@EnableAutoConfiguration
+@EnableSpectator
 public class Membership {
     public static void main(String[] args) {
         new SpringApplicationBuilder(Membership.class, IntegrationConfig.class).web(true).run(args);

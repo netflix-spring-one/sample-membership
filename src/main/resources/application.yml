@@ -10,7 +10,7 @@ netflix:
   spectator.rest.maxAge: 2000
 
 #eureka.client.serviceUrl.defaultZone: http://eureka:8671/eureka/
-#eureka.client.serviceUrl.defaultZone: http://192.168.99.100:8671/
-eureka.client.serviceUrl.defaultZone: http://localhost:8671/eureka
+#eureka.client.serviceUrl.defaultZone: http://192.168.99.100:8671/eureka/
+eureka.client.serviceUrl.defaultZone: http://localhost:8671/eureka/
 
 server.port: 8080
