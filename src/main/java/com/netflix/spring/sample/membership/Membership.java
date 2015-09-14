@@ -4,15 +4,19 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.boot.builder.SpringApplicationBuilder;
 import org.springframework.cloud.netflix.eureka.EnableEurekaClient;
+import org.springframework.cloud.netflix.eureka.EurekaStatusChangedEvent;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.event.EventListener;
+import org.springframework.integration.annotation.IntegrationComponentScan;
+import org.springframework.integration.annotation.MessagingGateway;
 import org.springframework.integration.channel.DirectChannel;
 import org.springframework.integration.config.EnableIntegrationManagement;
-import org.springframework.integration.core.MessageSource;
 import org.springframework.integration.dsl.IntegrationFlow;
 import org.springframework.integration.dsl.IntegrationFlows;
 import org.springframework.integration.dsl.channel.MessageChannels;
@@ -20,6 +24,7 @@ import org.springframework.integration.dsl.core.Pollers;
 import org.springframework.integration.endpoint.MethodInvokingMessageSource;
 import org.springframework.integration.support.management.DefaultMetricsFactory;
 import org.springframework.integration.support.management.MetricsFactory;
+import org.springframework.messaging.MessageChannel;
 import org.springframework.scheduling.annotation.EnableScheduling;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -28,6 +33,7 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.google.common.collect.ImmutableMap;
+import com.netflix.appinfo.InstanceInfo.InstanceStatus;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -85,8 +91,29 @@ class MembershipController {
 
 
 @Configuration
+@IntegrationComponentScan(basePackageClasses=ControlBusGateway.class)
 @EnableIntegrationManagement(countsEnabled = "*", statsEnabled = "*", metricsFactory = "metricsFactory")
 class IntegrationConfig {
+	
+	@Autowired
+	ControlBusGateway controlChannel;
+	
+	@EventListener
+	public void onEurekaStatusDown(EurekaStatusChangedEvent event)
+	{
+		if(event.getStatus() == InstanceStatus.DOWN || event.getStatus() == InstanceStatus.OUT_OF_SERVICE)
+		{
+			System.out.println("Stopping adapters...");
+			controlChannel.send("@*ChannelAdapter.stop()");
+		}
+	}
+	
+	@EventListener(classes=EurekaStatusChangedEvent.class, condition="#root.event.status.toString() == 'UP'")
+	public void onEurekaStatusUp()
+	{
+		System.out.println("Starting adapters...");
+		controlChannel.send("@*ChannelAdapter.start()");
+	}
 	
 	@Bean
 	public MetricsFactory metricsFactory() {
@@ -94,11 +121,23 @@ class IntegrationConfig {
 	}
 	
 	@Bean
-	public MessageSource<?> integerMessageSource() {
+	public MethodInvokingMessageSource integerMessageSource() {
 		MethodInvokingMessageSource source = new MethodInvokingMessageSource();
 		source.setObject(new AtomicInteger());
 		source.setMethodName("getAndIncrement");
 		return source;
+	}
+
+	@Bean
+	public MessageChannel control() {
+		return MessageChannels.direct().get();
+	}
+
+	@Bean
+	public IntegrationFlow controlBusFlow() {
+		return IntegrationFlows.from("control")
+				.controlBus((config) -> config.autoStartup(true).id("controlBus"))
+				.get();
 	}
 
 	@Bean
@@ -113,6 +152,14 @@ class IntegrationConfig {
 				.filter((Integer p) -> p > 0)
 				.transform(Object::toString)
 				.channel(MessageChannels.queue("sampleQueue"))
+//				.handle(System.out::println)
 				.get();
 	}
+	
+  
+}
+
+@MessagingGateway(defaultRequestChannel = "control")
+interface ControlBusGateway {
+    void send(String command);
 }
