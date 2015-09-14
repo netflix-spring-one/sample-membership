@@ -3,14 +3,11 @@ spring:
   autoconfigure.exclude: org.springframework.cloud.netflix.servo.ServoMetricsAutoConfiguration
 security.basic.enabled: false
 netflix:
-  appinfo.name: ${spring.application.name}
-  appinfo.region: us-west-1
-  environment: test
   atlas.uri: http://localhost:7101/api/v1/publish
   spectator.rest.maxAge: 2000
 
-#eureka.client.serviceUrl.defaultZone: http://eureka:9000/eureka/
-#eureka.client.serviceUrl.defaultZone: http://192.168.99.100:9000/eureka/
-eureka.client.serviceUrl.defaultZone: http://localhost:9000/eureka/
+eureka:
+  instance.appGroupName: 'sample'
+  client.serviceUrl.defaultZone: http://localhost:9000/eureka/
 
 server.port: 8000
